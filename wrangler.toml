@@ -1,0 +1,23 @@
+name = "coding-ai"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+GOOGLE_REDIRECT_URI = "https://coding-ai.<subdomain>.workers.dev/auth/google/callback"
+GEMINI_TEXT_MODEL = "gemini-2.5-pro"
+GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image"
+APP_NAME = "Coding AI"
+
+# Buat database dulu: wrangler d1 create coding-ai-db
+# Lalu tempel database_id yang muncul di sini
+[[d1_databases]]
+binding = "DB"
+database_name = "coding-ai-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Secrets (JANGAN ditulis di sini, set lewat CLI):
+#   wrangler secret put JWT_SECRET
+#   wrangler secret put GOOGLE_CLIENT_ID
+#   wrangler secret put GOOGLE_CLIENT_SECRET
+#   wrangler secret put GEMINI_API_KEY

@@ -1,0 +1,7 @@
+# Salin file ini jadi ".dev.vars" untuk development lokal (wrangler dev).
+# JANGAN commit file ".dev.vars" ke git.
+
+JWT_SECRET=ganti-dengan-string-acak-panjang-minimal-32-karakter
+GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxxxxxxx
+GEMINI_API_KEY=xxxxxxxx
