@@ -4,7 +4,7 @@ compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-GOOGLE_REDIRECT_URI = "https://coding-ai.<subdomain>.workers.dev/auth/google/callback"
+GOOGLE_REDIRECT_URI = "https://coding-ai.durofik029.workers.dev/auth/google/callback"
 GEMINI_TEXT_MODEL = "gemini-2.5-pro"
 GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image"
 APP_NAME = "Coding AI"
