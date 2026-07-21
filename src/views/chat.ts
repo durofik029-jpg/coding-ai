@@ -76,8 +76,8 @@ export function renderChat(params: {
 
     <div class="messages" id="messages">
       <div class="empty-state" id="emptyState">
-        <h2>> Mau dibantu apa hari ini?</h2>
-        <p>Pilih kategori di samping, atau langsung tulis perintah di bawah.</p>
+        <h2>Mau dibantu apa hari ini?</h2>
+        <p>Pilih kategori di samping, atau langsung tulis pertanyaanmu di bawah.</p>
         <div class="starter-grid">
           <div class="starter-card" onclick="startNewConversation('pr')"><b>PR &amp; Sekolah</b><span>Jelasin materi, bantu kerjain tugas</span></div>
           <div class="starter-card" onclick="startNewConversation('coding')"><b>Coding</b><span>Debug error, tulis/kaji ulang kode</span></div>
@@ -98,7 +98,7 @@ export function renderChat(params: {
         <div class="composer-row">
           <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="onFileSelected(event)" />
           <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Lampirkan foto">${ICONS.paperclip}</button>
-          <textarea id="composerInput" rows="1" placeholder="Ketik perintah... (Shift+Enter buat baris baru)"></textarea>
+          <textarea id="composerInput" rows="1" placeholder="Tulis pesan... (kirim foto buat diedit/ditanya)"></textarea>
           <button class="send-btn" id="sendBtn" onclick="sendMessage()">${ICONS.send}</button>
         </div>
       </div>
@@ -109,7 +109,10 @@ export function renderChat(params: {
 
 <script>
   let activeConversationId = null;
-  let pendingImage = null;
+  let pendingCategory = null;
+  let pendingImage = null; // { base64, mime, dataUrl }
+
+  const CATEGORY_LABELS = { pr: 'PR & Sekolah', coding: 'Coding', foto: 'Edit Foto', umum: 'Obrolan bebas' };
 
   function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
@@ -150,24 +153,22 @@ export function renderChat(params: {
     ).join('');
   }
 
-  async function startNewConversation(category) {
-    const res = await fetch('/api/conversations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category })
-    });
-    const data = await res.json();
-    activeConversationId = data.conversation.id;
+  // Tidak langsung bikin baris di database - obrolan baru cuma dibuat
+  // beneran begitu pesan pertama dikirim. Ini cuma reset tampilan.
+  function startNewConversation(category) {
+    activeConversationId = null;
+    pendingCategory = category;
     document.getElementById('messagesInner').innerHTML = '';
-    document.getElementById('emptyState').style.display = 'none';
-    document.getElementById('topbarTitle').textContent = data.conversation.title;
-    await loadConversations();
+    document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('topbarTitle').textContent = category ? CATEGORY_LABELS[category] : 'Obrolan baru';
+    document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('composerInput').focus();
   }
 
   async function openConversation(id) {
     activeConversationId = id;
+    pendingCategory = null;
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('sidebar').classList.remove('open');
     const res = await fetch('/api/conversations/' + id + '/messages');
@@ -194,7 +195,7 @@ export function renderChat(params: {
 
   function renderBubble(m) {
     const isUser = m.role === 'user';
-    const avatar = isUser ? '<div class="avatar me">>></div>' : '<div class="avatar ai">AI</div>';
+    const avatar = isUser ? '<div class="avatar me">Km</div>' : '<div class="avatar ai">AI</div>';
     let content = '';
     if (m.content_text) content += m.content_text.replace(/</g,'&lt;');
     if (m.content_image_base64) content += '<img src="data:' + m.content_image_mime + ';base64,' + m.content_image_base64 + '" />';
@@ -211,9 +212,11 @@ export function renderChat(params: {
     const text = input.value.trim();
     if (!text && !pendingImage) return;
 
+    // Obrolan beneran dibuat di sini, saat pesan pertama dikirim -
+    // jadi gak ada lagi baris "Obrolan baru" kosong menumpuk di riwayat.
     if (!activeConversationId) {
       const res = await fetch('/api/conversations', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ category: null })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ category: pendingCategory })
       });
       const data = await res.json();
       activeConversationId = data.conversation.id;
@@ -245,8 +248,10 @@ export function renderChat(params: {
       } else {
         inner.insertAdjacentHTML('beforeend', renderBubble(data.reply));
         if (data.title) document.getElementById('topbarTitle').textContent = data.title;
-        await loadConversations();
       }
+      // Judul obrolan sudah di-set di server begitu pesan pertama masuk,
+      // jadi selalu refresh daftar biar sinkron - berhasil ataupun gagal.
+      await loadConversations();
     } catch (err) {
       document.getElementById('typingRow')?.remove();
       inner.insertAdjacentHTML('beforeend', renderBubble({ role: 'assistant', content_text: 'Koneksi gagal, coba lagi.' }));
@@ -263,6 +268,22 @@ export function renderChat(params: {
   composerInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
+
+  // Supaya keyboard HP gak nutupin kotak chat: pakai tinggi visualViewport
+  // yang sesungguhnya (bukan 100vh, yang gak ikut menyusut saat keyboard muncul).
+  function fitToViewport() {
+    const vv = window.visualViewport;
+    const h = vv ? vv.height : window.innerHeight;
+    document.querySelector('.chat-shell').style.height = h + 'px';
+    scrollToBottom();
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', fitToViewport);
+    window.visualViewport.addEventListener('scroll', fitToViewport);
+  }
+  window.addEventListener('resize', fitToViewport);
+  fitToViewport();
+  composerInput.addEventListener('focus', () => setTimeout(fitToViewport, 300));
 
   loadConversations();
 </script>
