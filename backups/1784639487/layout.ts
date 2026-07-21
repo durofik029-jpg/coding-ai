@@ -58,7 +58,9 @@ export function renderPage(title: string, body: string): string {
     transition: all 0.2s;
   }
   .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 12px var(--neon); }
-  .btn.ghost { border-color: var(--muted); color: var(--muted); }
+  .btn.ghost {
+    border-color: var(--muted); color: var(--muted);
+  }
   .btn.ghost:hover { border-color: var(--neon); color: var(--neon); background: transparent; box-shadow: none; }
   .btn.danger { border-color: var(--red); color: var(--red); }
   .btn.danger:hover { background: var(--red); color: #000; }
@@ -71,7 +73,10 @@ export function renderPage(title: string, body: string): string {
     overflow: hidden;
     box-shadow: 0 0 15px rgba(0,255,0,0.05);
   }
-  .terminal .bar { display: flex; gap: 7px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: #050505; }
+  .terminal .bar {
+    display: flex; gap: 7px; padding: 10px 14px; border-bottom: 1px solid var(--border);
+    background: #050505;
+  }
   .terminal .bar span { width: 10px; height: 10px; border-radius: 50%; background: #333; }
   .terminal .body { padding: 18px 20px; font-size: 13.5px; color: #a0ffa0; }
   .terminal .body .muted-line { color: var(--muted); }
@@ -92,7 +97,8 @@ export function renderPage(title: string, body: string): string {
   footer { color: var(--muted); font-size: 12.5px; padding: 40px 0; text-align: center; border-top: 1px solid var(--border); margin-top: 60px; }
   input[type=text], textarea {
     background: var(--panel); border: 1px solid var(--border); color: var(--neon);
-    padding: 10px 12px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 14px; outline: none;
+    padding: 10px 12px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 14px;
+    outline: none;
   }
   input[type=text]:focus, textarea:focus { border-color: var(--neon); box-shadow: 0 0 6px var(--neon); }
 
@@ -103,7 +109,9 @@ export function renderPage(title: string, body: string): string {
   }
   .shield-badge svg { flex-shrink: 0; }
 
+  /* ---------- Layout chat AI ---------- */
   .chat-shell { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
+
   .sidebar {
     width: 268px; flex-shrink: 0; background: var(--panel); border-right: 1px solid var(--border);
     display: flex; flex-direction: column; padding: 14px; gap: 14px;
@@ -143,6 +151,7 @@ export function renderPage(title: string, body: string): string {
   .chat-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   .chat-topbar { display: none; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
   .menu-toggle { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text); padding: 6px 10px; cursor: pointer; }
+
   .messages { flex: 1; overflow-y: auto; padding: 24px 16px 8px; }
   .messages-inner { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
   .empty-state { max-width: 640px; margin: 10vh auto 0; text-align: center; color: var(--muted); }
@@ -152,6 +161,7 @@ export function renderPage(title: string, body: string): string {
   .starter-card:hover { border-color: var(--neon); box-shadow: 0 0 8px rgba(0,255,0,0.15); }
   .starter-card b { display: block; color: var(--neon); margin-bottom: 3px; font-size: 13.5px; }
   .starter-card span { color: var(--muted); }
+
   .msg-row { display: flex; gap: 12px; align-items: flex-start; }
   .msg-row.user { flex-direction: row-reverse; }
   .avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; font-family: 'Fira Code', monospace; }
@@ -163,6 +173,7 @@ export function renderPage(title: string, body: string): string {
   .bubble img { max-width: 100%; border-radius: 4px; margin-top: 6px; display: block; border: 1px solid var(--border); }
   .typing-dots span { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--neon); margin-right: 3px; animation: blink 1.2s infinite; }
   .typing-dots span:nth-child(2) { animation-delay: 0.2s; } .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
   .composer-wrap { padding: 12px 16px 18px; }
   .composer { max-width: 760px; margin: 0 auto; background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; }
   .image-preview { display: flex; align-items: center; gap: 8px; padding: 6px 6px 10px; border-bottom: 1px solid var(--border); }
