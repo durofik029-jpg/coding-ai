@@ -4,7 +4,7 @@ compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-GOOGLE_REDIRECT_URI = "https://coding-ai.durofik029.workers.dev/auth/google/callback"
+GOOGLE_REDIRECT_URI = "https://coding-ai.<subdomain>.workers.dev/auth/google/callback"
 GEMINI_TEXT_MODEL = "gemini-2.5-pro"
 GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image"
 APP_NAME = "Coding AI"
@@ -14,7 +14,7 @@ APP_NAME = "Coding AI"
 [[d1_databases]]
 binding = "DB"
 database_name = "coding-ai-db"
-database_id = "0c05186c-3e63-48ed-9dfc-18326c9de60c"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
 
 # Secrets (JANGAN ditulis di sini, set lewat CLI):
 #   wrangler secret put JWT_SECRET

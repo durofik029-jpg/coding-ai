@@ -76,8 +76,8 @@ export function renderChat(params: {
 
     <div class="messages" id="messages">
       <div class="empty-state" id="emptyState">
-        <h2>> Mau dibantu apa hari ini?</h2>
-        <p>Pilih kategori di samping, atau langsung tulis perintah di bawah.</p>
+        <h2>Mau dibantu apa hari ini?</h2>
+        <p>Pilih kategori di samping, atau langsung tulis pertanyaanmu di bawah.</p>
         <div class="starter-grid">
           <div class="starter-card" onclick="startNewConversation('pr')"><b>PR &amp; Sekolah</b><span>Jelasin materi, bantu kerjain tugas</span></div>
           <div class="starter-card" onclick="startNewConversation('coding')"><b>Coding</b><span>Debug error, tulis/kaji ulang kode</span></div>
@@ -98,7 +98,7 @@ export function renderChat(params: {
         <div class="composer-row">
           <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="onFileSelected(event)" />
           <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Lampirkan foto">${ICONS.paperclip}</button>
-          <textarea id="composerInput" rows="1" placeholder="Ketik perintah... (Shift+Enter buat baris baru)"></textarea>
+          <textarea id="composerInput" rows="1" placeholder="Tulis pesan... (kirim foto buat diedit/ditanya)"></textarea>
           <button class="send-btn" id="sendBtn" onclick="sendMessage()">${ICONS.send}</button>
         </div>
       </div>
@@ -109,7 +109,7 @@ export function renderChat(params: {
 
 <script>
   let activeConversationId = null;
-  let pendingImage = null;
+  let pendingImage = null; // { base64, mime, dataUrl }
 
   function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
@@ -194,7 +194,7 @@ export function renderChat(params: {
 
   function renderBubble(m) {
     const isUser = m.role === 'user';
-    const avatar = isUser ? '<div class="avatar me">>></div>' : '<div class="avatar ai">AI</div>';
+    const avatar = isUser ? '<div class="avatar me">Km</div>' : '<div class="avatar ai">AI</div>';
     let content = '';
     if (m.content_text) content += m.content_text.replace(/</g,'&lt;');
     if (m.content_image_base64) content += '<img src="data:' + m.content_image_mime + ';base64,' + m.content_image_base64 + '" />';

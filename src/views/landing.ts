@@ -19,14 +19,13 @@ export function renderLanding(appName: string): string {
   </div>
 </header>
 
-<section class="wrap" style="padding: 72px 0 24px; text-align: center;">
+<section class="wrap" style="padding: 80px 0 24px; text-align: center;">
   <div style="margin-bottom: 18px;">${cloudflareBadge()}</div>
-  <h1 style="font-size: 36px; line-height: 1.25; margin: 0 auto 16px; max-width: 640px;">
-    Asisten AI buat bantu tugas, PR, dan coding kamu
+  <h1 style="font-size: 38px; line-height: 1.25; margin: 0 auto 16px; max-width: 700px; color: var(--neon); text-shadow: 0 0 10px var(--neon);">
+    > ./coding-ai --help
   </h1>
-  <p style="color: var(--muted); max-width: 480px; margin: 0 auto 30px;">
-    Ngobrol, tanya jawab, sampai kirim & edit foto — semua dalam satu chat.
-    Login sekali dengan Google, langsung bisa dipakai.
+  <p style="color: var(--muted); max-width: 520px; margin: 0 auto 30px; font-size: 15px;">
+    Terminal AI pribadi buat ngerjain PR, coding, sampai edit foto. Login pake Google, langsung nyala.
   </p>
   <a class="btn" href="/auth/google" style="padding: 13px 24px; font-size: 15px;">Mulai dengan Google</a>
 </section>

@@ -35,7 +35,6 @@ export function renderDashboard(params: {
   <div class="wrap">
     <div class="brand"><span class="dot"></span> Coding AI</div>
     <div style="display:flex; align-items:center; gap:12px;">
-      <a class="btn ghost" href="/chat">&larr; Kembali ke Chat</a>
       <span style="color:var(--muted); font-size:14px;">${user.email}</span>
       <a class="btn ghost" href="/logout">Keluar</a>
     </div>
@@ -44,7 +43,7 @@ export function renderDashboard(params: {
 
 <section class="wrap" style="padding: 36px 0;">
   <p class="label">Dashboard</p>
-  <h1 style="font-size: 26px; margin: 8px 0 28px; color: var(--neon); text-shadow: 0 0 5px var(--neon);">Halo, ${user.name ?? user.email}</h1>
+  <h1 style="font-size: 26px; margin: 8px 0 28px;">Halo, ${user.name ?? user.email}</h1>
 
   <div class="card" style="margin-bottom: 24px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 14px;">
@@ -92,13 +91,13 @@ export function renderDashboard(params: {
     type: 'bar',
     data: {
       labels: usageData.map(d => d.day.slice(5)),
-      datasets: [{ label: 'Panggilan API', data: usageData.map(d => d.count), backgroundColor: '#00ff41', borderColor: '#00ff41', borderWidth: 1 }]
+      datasets: [{ label: 'Panggilan API', data: usageData.map(d => d.count), backgroundColor: '#ffb300' }]
     },
     options: {
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: '#666' }, grid: { color: '#1a1a1a' } },
-        y: { ticks: { color: '#666' }, grid: { color: '#1a1a1a' }, beginAtZero: true }
+        x: { ticks: { color: '#8a8f98' }, grid: { color: '#232a36' } },
+        y: { ticks: { color: '#8a8f98' }, grid: { color: '#232a36' }, beginAtZero: true }
       }
     }
   });
@@ -113,9 +112,9 @@ export function renderDashboard(params: {
     if (!res.ok) { alert('Gagal membuat key'); return; }
     const data = await res.json();
     document.getElementById('newKeyBox').innerHTML =
-      '<div class="card" style="margin-bottom:14px; border-color:var(--neon);">' +
+      '<div class="card" style="margin-bottom:14px; border-color:var(--amber);">' +
       '<p class="label" style="margin:0 0 8px;">Key baru &mdash; simpan sekarang, tidak akan ditampilkan lagi</p>' +
-      '<code style="word-break:break-all; color:var(--neon);">' + data.key + '</code></div>';
+      '<code style="word-break:break-all;">' + data.key + '</code></div>';
     location.reload();
   }
 
