@@ -14,7 +14,7 @@ APP_NAME = "Coding AI"
 [[d1_databases]]
 binding = "DB"
 database_name = "coding-ai-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "0c05186c-3e63-48ed-9dfc-18326c9de60c"
 
 # Secrets (JANGAN ditulis di sini, set lewat CLI):
 #   wrangler secret put JWT_SECRET
