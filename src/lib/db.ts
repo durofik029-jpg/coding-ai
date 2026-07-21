@@ -120,6 +120,121 @@ export async function logUsage(
     .run();
 }
 
+// ---------- Chat AI: obrolan & pesan ----------
+
+export type Conversation = {
+  id: string;
+  user_id: string;
+  title: string;
+  category: string | null;
+  created_at: number;
+  updated_at: number;
+};
+
+export type Message = {
+  id: string;
+  conversation_id: string;
+  role: "user" | "assistant";
+  content_text: string | null;
+  content_image_base64: string | null;
+  content_image_mime: string | null;
+  created_at: number;
+};
+
+export async function createConversation(
+  db: D1Database,
+  userId: string,
+  title: string,
+  category: string | null
+): Promise<Conversation> {
+  const id = newId();
+  const now = Date.now();
+  await db
+    .prepare(
+      "INSERT INTO conversations (id, user_id, title, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)"
+    )
+    .bind(id, userId, title, category, now, now)
+    .run();
+  return { id, user_id: userId, title, category, created_at: now, updated_at: now };
+}
+
+export async function listConversations(db: D1Database, userId: string): Promise<Conversation[]> {
+  const res = await db
+    .prepare("SELECT * FROM conversations WHERE user_id = ? ORDER BY updated_at DESC LIMIT 100")
+    .bind(userId)
+    .all<Conversation>();
+  return res.results ?? [];
+}
+
+export async function getConversation(
+  db: D1Database,
+  userId: string,
+  id: string
+): Promise<Conversation | null> {
+  return await db
+    .prepare("SELECT * FROM conversations WHERE id = ? AND user_id = ?")
+    .bind(id, userId)
+    .first<Conversation>();
+}
+
+export async function renameConversationIfDefault(
+  db: D1Database,
+  id: string,
+  title: string
+): Promise<void> {
+  await db
+    .prepare("UPDATE conversations SET title = ? WHERE id = ? AND title = 'Obrolan baru'")
+    .bind(title.slice(0, 60), id)
+    .run();
+}
+
+export async function touchConversation(db: D1Database, id: string): Promise<void> {
+  await db.prepare("UPDATE conversations SET updated_at = ? WHERE id = ?").bind(Date.now(), id).run();
+}
+
+export async function deleteConversation(db: D1Database, userId: string, id: string): Promise<void> {
+  await db
+    .prepare("DELETE FROM messages WHERE conversation_id = ? AND conversation_id IN (SELECT id FROM conversations WHERE id = ? AND user_id = ?)")
+    .bind(id, id, userId)
+    .run();
+  await db.prepare("DELETE FROM conversations WHERE id = ? AND user_id = ?").bind(id, userId).run();
+}
+
+export async function addMessage(
+  db: D1Database,
+  conversationId: string,
+  role: "user" | "assistant",
+  text: string | null,
+  imageBase64: string | null,
+  imageMime: string | null
+): Promise<Message> {
+  const id = newId();
+  const now = Date.now();
+  await db
+    .prepare(
+      "INSERT INTO messages (id, conversation_id, role, content_text, content_image_base64, content_image_mime, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    )
+    .bind(id, conversationId, role, text, imageBase64, imageMime, now)
+    .run();
+  return {
+    id,
+    conversation_id: conversationId,
+    role,
+    content_text: text,
+    content_image_base64: imageBase64,
+    content_image_mime: imageMime,
+    created_at: now,
+  };
+}
+
+export async function listMessages(db: D1Database, conversationId: string): Promise<Message[]> {
+  const res = await db
+    .prepare("SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC")
+    .bind(conversationId)
+    .all<Message>();
+  return res.results ?? [];
+}
+
 // Ringkasan pemakaian 14 hari terakhir per hari, buat chart monitoring di dashboard.
 export async function getUsageSeries(
   db: D1Database,

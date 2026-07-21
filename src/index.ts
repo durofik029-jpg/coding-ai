@@ -13,10 +13,26 @@ import {
   touchKeyUsage,
   upsertUserFromGoogle,
   getUserById,
+  createConversation,
+  listConversations,
+  getConversation,
+  deleteConversation,
+  addMessage,
+  listMessages,
+  renameConversationIfDefault,
+  touchConversation,
 } from "./lib/db";
-import { callGeminiText, callNanoBanana } from "./lib/ai";
+import { callGeminiText, callNanoBanana, callGemini, type ChatMessage } from "./lib/ai";
 import { renderLanding } from "./views/landing";
 import { renderDashboard } from "./views/dashboard";
+import { renderChat } from "./views/chat";
+
+const CATEGORY_PROMPTS: Record<string, string> = {
+  pr: "Kamu adalah asisten belajar yang sabar dan jelas, membantu murid mengerjakan PR dan memahami materi sekolah. Jelaskan langkah demi langkah, jangan cuma kasih jawaban akhir, dan pakai bahasa Indonesia yang mudah dimengerti.",
+  coding: "Kamu adalah asisten coding yang membantu debug error, menjelaskan kode, dan menulis kode yang rapi dan benar. Sertakan contoh kode dalam blok kode kalau relevan.",
+  foto: "Kamu bisa menganalisis foto yang dikirim pengguna dan mengedit foto sesuai instruksi mereka.",
+  umum: "Kamu adalah asisten AI yang ramah, jelas, dan membantu untuk berbagai topik.",
+};
 
 type Bindings = {
   DB: D1Database;
@@ -74,7 +90,7 @@ app.get("/auth/google/callback", async (c) => {
       maxAge: 60 * 60 * 24 * 7,
     });
     deleteCookie(c, "oauth_state");
-    return c.redirect("/dashboard");
+    return c.redirect("/chat");
   } catch (err) {
     console.error(err);
     return c.text("Login Google gagal. Cek GOOGLE_CLIENT_ID/SECRET dan redirect URI.", 500);
@@ -92,6 +108,10 @@ app.use("/dashboard/*", requireSession);
 app.use("/dashboard", requireSession);
 app.use("/api/keys/*", requireSession);
 app.use("/api/keys", requireSession);
+app.use("/chat", requireSession);
+app.use("/chat/*", requireSession);
+app.use("/api/conversations", requireSession);
+app.use("/api/conversations/*", requireSession);
 
 type AppContext = Context<{ Bindings: Bindings; Variables: Variables }>;
 
@@ -128,6 +148,100 @@ app.delete("/api/keys/:id", async (c) => {
   const session = c.get("session");
   await revokeApiKey(c.env.DB, session.sub, c.req.param("id"));
   return c.json({ ok: true });
+});
+
+// ---------- Chat AI (dashboard utama setelah login) ----------
+
+app.get("/chat", async (c) => {
+  const session = c.get("session");
+  const user = await getUserById(c.env.DB, session.sub);
+  if (!user) return c.redirect("/");
+  const conversations = await listConversations(c.env.DB, user.id);
+  return c.html(renderChat({ user, conversations }));
+});
+
+app.get("/api/conversations", async (c) => {
+  const session = c.get("session");
+  const conversations = await listConversations(c.env.DB, session.sub);
+  return c.json({ conversations });
+});
+
+app.post("/api/conversations", async (c) => {
+  const session = c.get("session");
+  const body = await c.req.json<{ category?: string | null }>().catch(() => ({ category: null }));
+  const category = body.category && CATEGORY_PROMPTS[body.category] ? body.category : null;
+  const conversation = await createConversation(c.env.DB, session.sub, "Obrolan baru", category);
+  return c.json({ conversation });
+});
+
+app.get("/api/conversations/:id/messages", async (c) => {
+  const session = c.get("session");
+  const conversation = await getConversation(c.env.DB, session.sub, c.req.param("id"));
+  if (!conversation) return c.json({ error: "Obrolan tidak ditemukan" }, 404);
+  const messages = await listMessages(c.env.DB, conversation.id);
+  return c.json({ conversation, messages });
+});
+
+app.delete("/api/conversations/:id", async (c) => {
+  const session = c.get("session");
+  await deleteConversation(c.env.DB, session.sub, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+app.post("/api/conversations/:id/messages", async (c) => {
+  const session = c.get("session");
+  const conversation = await getConversation(c.env.DB, session.sub, c.req.param("id"));
+  if (!conversation) return c.json({ error: "Obrolan tidak ditemukan" }, 404);
+
+  const body = await c.req
+    .json<{ text?: string; image_base64?: string | null; image_mime?: string | null }>()
+    .catch(() => ({ text: "", image_base64: null, image_mime: null }));
+  const text = (body.text || "").trim();
+  const imageBase64 = body.image_base64 || null;
+  const imageMime = body.image_mime || null;
+  if (!text && !imageBase64) return c.json({ error: "Pesan kosong" }, 400);
+
+  await addMessage(c.env.DB, conversation.id, "user", text || null, imageBase64, imageMime);
+
+  // Bangun histori percakapan (teks saja) buat konteks multi-turn.
+  const history = await listMessages(c.env.DB, conversation.id);
+  const contents: ChatMessage[] = history
+    .slice(0, -1) // pesan user yang baru saja disimpan ditambahkan manual di bawah dengan gambar
+    .filter((m) => m.content_text)
+    .map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.content_text as string }] }));
+
+  const currentParts: ChatMessage["parts"] = [];
+  if (text) currentParts.push({ text });
+  if (imageBase64 && imageMime) currentParts.push({ inlineData: { mimeType: imageMime, data: imageBase64 } });
+  contents.push({ role: "user", parts: currentParts });
+
+  const systemInstruction = conversation.category ? CATEGORY_PROMPTS[conversation.category] : CATEGORY_PROMPTS.umum;
+  const useImageModel = Boolean(imageBase64) || conversation.category === "foto";
+
+  const result = await callGemini({
+    apiKey: c.env.GEMINI_API_KEY,
+    model: useImageModel ? c.env.GEMINI_IMAGE_MODEL : c.env.GEMINI_TEXT_MODEL,
+    contents,
+    systemInstruction,
+    imageOutput: useImageModel,
+  });
+
+  if (!result.ok) {
+    return c.json({ error: result.error || "Gagal memproses pesan" }, 502);
+  }
+
+  const assistantMsg = await addMessage(
+    c.env.DB,
+    conversation.id,
+    "assistant",
+    result.text || null,
+    result.imageBase64 || null,
+    result.imageMime || null
+  );
+  await touchConversation(c.env.DB, conversation.id);
+  if (text) await renameConversationIfDefault(c.env.DB, conversation.id, text);
+
+  return c.json({ reply: assistantMsg, title: text ? text.slice(0, 60) : undefined });
 });
 
 // ---------- Middleware: API key (untuk endpoint AI, dipanggil bot WA / app lain) ----------

@@ -35,6 +35,7 @@ export function renderDashboard(params: {
   <div class="wrap">
     <div class="brand"><span class="dot"></span> Coding AI</div>
     <div style="display:flex; align-items:center; gap:12px;">
+      <a class="btn ghost" href="/chat">&larr; Kembali ke Chat</a>
       <span style="color:var(--muted); font-size:14px;">${user.email}</span>
       <a class="btn ghost" href="/logout">Keluar</a>
     </div>
